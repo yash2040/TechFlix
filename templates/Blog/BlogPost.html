@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% block title %}
+    BlogPost
+{% endblock title %}
+{% block body %}
+{% load humanize %}
+{% load extras %}
+<div class="container my-4">
+    <h2 class="blog-post-title">{{post.title}}</h2>
+    <p class="blog-post-meta">{{post.timeStamp}} by <a href="/about">{{post.author}} ({{post.viewss}})</a></p>
+
+    <p><b>{{post.content}}</b></p>
+        
+         <input type="hidden" id="postslugt" value="{{post.slug}}">
+        <input type="hidden" id="usernot" value="{{request.user}}">
+   
+  
+         <input type="hidden" id="postslug" value="{{post.slug}}" name="postslug">
+        <input type="hidden" id="userno" value="{{request.user}}" name="user">
+        <input type="hidden" id="vote" value="" name="vote">
+        {% if  user.is_anonymous%}
+
+        {% else %}
+            <button id='minus{{post.slug}}'  class='btn btn-danger minus' onclick="dec()">DownVote</button>
+       
+        <button id='plus{{post.slug}}'  class='btn btn-success plus' onclick="inc()">UpVote</button>
+        {% endif %}
+       
+       
+      <span id='gg' style="float:right"; class="badge badge-dark"><b><h4>Net Votes {{post.votes}}</h4></b></span>
+        
+</div>
+
+
+
+{% if user.is_anonymous %}
+    <div class="container">
+        <h3>Please Login/SignUp to write a comment</h3>
+    </div>
+            
+{% else %}
+    <div class="container">
+          <form action="/Blog/postComment" method="post">{% csrf_token %}
+            <div class="input-group">
+            <div class="input-group-prepend my-2">
+                <span class="input-group-text">Write Comment</span>
+            </div>
+            <textarea class="form-control" aria-label="Write Comment" name="comment"></textarea>
+            </div>
+            <input type="hidden" name="postsno" value="{{post.id}}">
+            <input type="hidden" name="psno" value="">
+            <button type="submit"  class="btn btn-primary my-3">Post Comment</button>
+         </form>
+        
+{% endif %}
+
+    </div>
+<div class="container">
+    <h1>{{comments|length}} Comments</h1>
+
+    {% for comment in comments reversed %}
+             
+         
+        <div class="row my-4">
+            <div class="col-md-1"><img class="rounded-circle p-1" src="/static/img.png" alt="Not Availaible" style="width:85px;height:75px;"></div>   
+            <div class="col-md-11 commentContainer" style="scroll;border:2px solid black"><b><i>{{comment.user}} <span class="badge badge-secondary"> {{comment.timestamp|naturaltime}} </span></i></b>
+
+                <div class="mx-3 my-2">
+                    {{comment.comment}}
+                </div>
+
+
+
+                {% if user.is_anonymous %}
+
+                {% else %}
+                <div class="mx-3 my-2">
+                <button class="btn btn-secondary btn-sm" type="button" data-toggle="collapse" data-target="#t{{comment.sno}}" aria-expanded="false" aria-controls="collapseExample">
+                            Reply
+                </button>
+                
+                <div class="collapse mx-2 my-2" id="t{{comment.sno}}">
+                <div class="card card-body">
+
+
+                             <form action="/Blog/postComment" method="post">{% csrf_token %}
+                                <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">Your Reply</span>
+                                </div>
+                                <textarea class="form-control" aria-label="Your Reply" name="comment"></textarea>
+                                </div>
+                                  <input type="hidden" name="postsno" value="{{post.id}}">
+                                <input type="hidden" name="psno" value="{{comment.sno}}">
+                               
+                                  <button type="submit" class="btn btn-primary my-3">Post</button>
+                             </form>
+                        
+                </div>
+                </div>
+
+                </div>
+                 {% endif %}
+
+                        <div class="replies mx-3 my-2">
+                           {% for reply in replydict|get_dict:comment.sno reversed %}
+
+                                <div class="row my-3">
+                                    <div class="col-md-1"><img class="rounded-circle p-1" src="/static/img.png" alt="Not Availaible" style="width:85px;height:75px;"></div>
+                                    <div class="col-md-11"><b><i>{{reply.user}} <span class="badge badge-secondary"> {{reply.timestamp|naturaltime}} </span></i></b>
+                                         <div class="mx-3 my-2">
+                                    {{reply.comment}}
+                                </div>
+                                    </div>
+
+                                </div>
+                                
+                               
+                               
+                           {% endfor %}
+
+                        </div>
+                
+                
+            </div>
+          </div>
+          {% endfor %}
+      </div>
+}
+}
+{% endblock body %}
+{% block js %}
+
+        <script>
+                console.log("{{request.user}}");
+                var po=$("#postslugt").val();
+                //console.log(po);
+                var u=$("#usernot").val();
+                const n=document.getElementById("minus"+po);
+                const p=document.getElementById("plus"+po);
+                
+
+                function inc()
+                {
+                    //alert("Your Vote has been sent.It will be reflected in a minute")
+                    p.disabled=true;
+                    n.disabled=false;
+                    req=new XMLHttpRequest();
+                    req.open("GET","/Blog/vote?vote=1&postslug="+po,true);
+                    req.send();
+                    let x={{post.votes}};
+                    console.log(x);
+                    alert("Your Vote has been sent.It will be reflected in a minute")
+                    //document.getElementById('gg').innerHTML=parseInt(x);
+                    
+                }
+                 function dec()
+                {
+                  // alert("Your Vote has been sent.It will be reflected in a minute")
+                    //document.getElementById("gg").innerHTML=x;
+                    n.disabled=true;
+                    p.disabled=false;
+                    req=new XMLHttpRequest();
+                    req.open("GET","/Blog/vote?vote=2&postslug="+po,true);
+                    req.send();
+                   let x={{post.votes}};
+                   console.log(x);
+                   alert("Your Vote has been sent.It will be reflected in a minute")
+                   // document.getElementById('gg').innerHTML=parseInt(x);
+
+                }
+                
+
+        </script>   
+{% endblock js %}
